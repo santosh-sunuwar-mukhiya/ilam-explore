@@ -6,6 +6,13 @@ node_modules/
 .env.*
 !.env.example
 
+# Credentials and private keys
+*.pem
+*.key
+*.crt
+*.p12
+secrets/
+
 # Build output
 dist/
 build/
