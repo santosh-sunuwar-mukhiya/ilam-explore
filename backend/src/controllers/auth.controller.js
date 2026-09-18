@@ -4,7 +4,6 @@ import { User } from "../models/user.models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
-import mongoose from "mongoose";
 
 // Method to Generate access and Refresh token.
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -224,4 +223,30 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 });
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+const changePassword = asyncHandler(async (req, res) => {
+  try {
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+
+    const user = await User.findById(req.user?._id)
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+
+    if (!isPasswordCorrect) {
+      throw new ApiError(400, "Invalid Old Password!");
+    }
+
+    if (!(newPassword === confirmPassword)){
+      throw new ApiError(400, "new password and confirm password did not matched.")
+    }
+
+    user.password = newPassword;
+    return res.status(200).json(new ApiResponse(200, {}, "Password Updated Successfully!"));
+  } catch (err) {
+    throw new ApiError(500, "Error occured while changing password!")
+  }
+});
+
+const getMe = asyncHandler(async (req, res) => {
+  return res.status(200).json(new ApiResponse(200, req.user, "User fetched Successfully!"));
+});
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken, changePassword, getMe };
