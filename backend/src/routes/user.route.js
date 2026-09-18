@@ -1,10 +1,13 @@
 import express from "express"
-import {updateProfile} from "../controllers/user.controller.js"
+import { updateProfile } from "../controllers/user.controller.js"
+import { protect } from "../middlewares/auth.middleware.js";
+import { upload } from "../middlewares/multer.middleware.js";
+import { adminOnly } from "../middlewares/admin.middleware.js";
 
 const router = express.Router();
 
-router.patch("/profile", updateProfile);
+router.patch("/profile",protect, upload.single("avatar"), updateProfile);
 
-router.get("/", listUsers);
+router.get("/active-users", protect, adminOnly, listActiveUsers);
 
 export default router;
