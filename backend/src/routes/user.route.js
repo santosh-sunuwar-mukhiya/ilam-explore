@@ -1,6 +1,7 @@
 import express from "express"
 import {
   updateProfile,
+  listUsers,
   listActiveUsers,
 } from "../controllers/user.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
@@ -10,6 +11,8 @@ import { adminOnly } from "../middlewares/admin.middleware.js";
 const router = express.Router();
 
 router.patch("/profile",protect, upload.single("avatar"), updateProfile);
+
+router.get("/", protect, adminOnly, listUsers);
 
 router.get("/active-users", protect, adminOnly, listActiveUsers);
 

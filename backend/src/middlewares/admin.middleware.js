@@ -1,8 +1,10 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
+import { ApiError } from "../utils/ApiError.js";
 
 export const adminOnly = asyncHandler(async (req, res, next) => {
     if (req.user?.role !== "admin") {
-        return res.status(403).status(new ApiResponse(403, {}, "Admin access Required!"));
+        throw new ApiError(403, "Admin access Required!");
     }
+
+    next();
 });

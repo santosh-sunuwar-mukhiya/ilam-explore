@@ -2,35 +2,38 @@ import mongoose from "mongoose";
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 
-const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true,
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+    password: {
+      type: String,
+      required: true,
+      select: false,
+    },
+    role: { type: String, enum: ["user", "admin"], default: "user" },
+    isVerified: { type: Boolean, default: false },
+    refreshToken: { type: String, select: false },
+    avatar: { type: String, default: "" },
   },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
-    trim: true,
-  },
-  password: {
-    type: String,
-    required: true,
-    select: false,
-  },
-  role: { type: String, enum: ["user", "admin"], default: "user" },
-  isVerified: { type: Boolean, default: false },
-  refreshToken: { type: String, select: false },
-  avatar: { type: String, default: "" },
-}, { timstamps: true });
+  { timestamps: true },
+);
 
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+// Mongoose 9 promise-based middleware (no `next` callback is passed anymore)
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
 
-  this.password = await bcrypt.hash(this.password, 12)
-  next()
+  this.password = await bcrypt.hash(this.password, 12);
 });
 
 userSchema.methods.isPasswordCorrect = async function (password) {
