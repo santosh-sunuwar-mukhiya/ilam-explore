@@ -1,0 +1,36 @@
+import axiosClient, { unwrap } from "./axiosClient";
+
+// POST /api/v1/auth/login -> { user, accessToken, refreshToken }
+// Tokens are also set as HttpOnly cookies by the backend.
+export const login = async ({ email, password }) => {
+  const response = await axiosClient.post("/auth/login", { email, password });
+  return unwrap(response);
+};
+
+// POST /api/v1/auth/register (multipart because avatar is optional)
+export const register = async ({ name, email, password, avatar }) => {
+  const formData = new FormData();
+
+  formData.append("name", name);
+  formData.append("email", email);
+  formData.append("password", password);
+  if (avatar) formData.append("avatar", avatar);
+
+  const response = await axiosClient.post("/auth/register", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+  return unwrap(response);
+};
+
+// GET /api/v1/auth/get-me -> the logged in user (401 when not authenticated)
+export const getCurrentUser = async () => {
+  const response = await axiosClient.get("/auth/get-me");
+  return unwrap(response);
+};
+
+// POST /api/v1/auth/logout -> clears the auth cookies
+export const logout = async () => {
+  const response = await axiosClient.post("/auth/logout");
+  return unwrap(response);
+};
