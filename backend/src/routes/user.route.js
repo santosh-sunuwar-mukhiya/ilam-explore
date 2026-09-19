@@ -1,5 +1,8 @@
 import express from "express"
-import { updateProfile } from "../controllers/user.controller.js"
+import {
+  updateProfile,
+  listActiveUsers,
+} from "../controllers/user.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { adminOnly } from "../middlewares/admin.middleware.js";
