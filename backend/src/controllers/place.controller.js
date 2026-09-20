@@ -3,6 +3,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Place } from "../models/place.model.js";
+import { User } from "../models/user.model.js";
 import { Review } from "../models/review.model.js";
 import { uploadOnCloudinary, deleteFromCloudinaryMany } from "../config/cloudinary.js";
 
@@ -104,6 +105,84 @@ const getPlaceById = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, place, "Place retrieved successfully"));
 });
+
+// AUTH: save a place for the current user
+const savePlace = asyncHandler(async (req, res) => {
+  const { placeId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(placeId)) {
+    throw new ApiError(400, "Invalid place id");
+  }
+
+  const place = await Place.exists({ _id: placeId });
+
+  if (!place) {
+    throw new ApiError(404, "Place not found");
+  }
+
+  await User.updateOne(
+    { _id: req.user._id },
+    { $addToSet: { savedPlaces: placeId } },
+  );
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { placeId, saved: true },
+        "Place saved successfully",
+      ),
+    );
+});
+
+// AUTH: remove a place from the current user's saved places
+const unsavePlace = asyncHandler(async (req, res) => {
+  const { placeId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(placeId)) {
+    throw new ApiError(400, "Invalid place id");
+  }
+
+  await User.updateOne(
+    { _id: req.user._id },
+    { $pull: { savedPlaces: placeId } },
+  );
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { placeId, saved: false },
+        "Place unsaved successfully",
+      ),
+    );
+});
+
+// AUTH: list places saved by the current user
+const listSavedPlaces = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id)
+    .select("savedPlaces")
+    .populate("savedPlaces");
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const places = user.savedPlaces;
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { places, total: places.length },
+        "Saved places retrieved successfully",
+      ),
+    );
+});
+
 // ADMIN: create place
 const createPlace = asyncHandler(async (req, res) => {
   const body = req.body || {};
@@ -291,4 +370,13 @@ const deletePlace = asyncHandler(async (req, res) => {
     );
 });
 
-export { listPlaces, getPlaceById, createPlace, updatePlace, deletePlace };
+export {
+  listPlaces,
+  getPlaceById,
+  savePlace,
+  unsavePlace,
+  listSavedPlaces,
+  createPlace,
+  updatePlace,
+  deletePlace,
+};

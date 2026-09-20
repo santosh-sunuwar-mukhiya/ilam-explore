@@ -25,6 +25,12 @@ const userSchema = new mongoose.Schema(
     isVerified: { type: Boolean, default: false },
     refreshToken: { type: String, select: false },
     avatar: { type: String, default: "" },
+    savedPlaces: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Place",
+      },
+    ],
   },
   { timestamps: true },
 );

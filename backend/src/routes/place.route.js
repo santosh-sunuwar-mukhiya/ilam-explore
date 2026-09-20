@@ -2,6 +2,9 @@ import { Router } from "express";
 import {
   listPlaces,
   getPlaceById,
+  savePlace,
+  unsavePlace,
+  listSavedPlaces,
   createPlace,
   updatePlace,
   deletePlace,
@@ -14,6 +17,14 @@ const router = Router();
 
 // public read
 router.route("/").get(listPlaces);
+
+// authenticated saved places
+router.route("/saved").get(protect, listSavedPlaces);
+
+router
+  .route("/:placeId/save")
+  .post(protect, savePlace)
+  .delete(protect, unsavePlace);
 
 router.route("/:id").get(getPlaceById);
 

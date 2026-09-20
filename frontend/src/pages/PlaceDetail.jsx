@@ -257,7 +257,7 @@ export default function PlaceDetail() {
                   key={`${image}-${index}`}
                   type="button"
                   onClick={() => setActiveImage(index)}
-                  className={`h-16 w-24 flex-shrink-0 overflow-hidden rounded-lg border-2 transition ${
+                  className={`h-16 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition ${
                     activeImage === index
                       ? "border-emerald-600"
                       : "border-transparent hover:border-slate-300"
