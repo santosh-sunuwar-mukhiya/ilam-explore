@@ -4,7 +4,13 @@ import { resolveImageUrl } from "../../api/config";
 
 // One review as returned by GET /api/v1/reviews/place/:placeId
 // (user is populated with { name, avatar }).
-export default function ReviewCard({ review }) {
+export default function ReviewCard({
+  review,
+  canManage = false,
+  onEdit,
+  onDelete,
+  isDeleting = false,
+}) {
   const avatar = resolveImageUrl(review?.user?.avatar);
 
   return (
@@ -24,9 +30,30 @@ export default function ReviewCard({ review }) {
 
         <div className="flex-1">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm font-semibold text-slate-900">
-              {review?.user?.name || "Deleted user"}
-            </p>
+            <div>
+              <p className="text-sm font-semibold text-slate-900">
+                {review?.user?.name || "Deleted user"}
+              </p>
+              {canManage && (
+                <div className="mt-2 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onEdit?.(review)}
+                    className="text-xs font-medium text-emerald-700 hover:text-emerald-900"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDelete?.(review)}
+                    disabled={isDeleting}
+                    className="text-xs font-medium text-red-700 hover:text-red-900"
+                  >
+                    {isDeleting ? "Deleting..." : "Delete"}
+                  </button>
+                </div>
+              )}
+            </div>
             <span className="text-xs text-slate-400">
               {formatDate(review?.createdAt)}
             </span>

@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getPlaceById } from "../api/places.api";
-import { listPlaceReviews } from "../api/reviews.api";
+import {
+  createReview,
+  deleteReview,
+  listPlaceReviews,
+  updateReview,
+} from "../api/reviews.api";
 import { resolveImageUrl } from "../api/config";
 import { formatBestTime, formatEntryFee } from "../utils/format";
 import CategoryBadge from "../components/common/CategoryBadge";
@@ -14,7 +19,7 @@ import useAuth from "../hooks/useAuth";
 
 export default function PlaceDetail() {
   const { id } = useParams();
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   const [place, setPlace] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,6 +31,10 @@ export default function PlaceDetail() {
   const [isReviewsLoading, setIsReviewsLoading] = useState(true);
   const [reviewsError, setReviewsError] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
+  const [reviewForm, setReviewForm] = useState({ rating: "5", comment: "" });
+  const [editingReview, setEditingReview] = useState(null);
+  const [reviewMutation, setReviewMutation] = useState("");
+  const [reviewSuccess, setReviewSuccess] = useState("");
 
   // GET /api/v1/places/:id - real place data.
   useEffect(() => {
@@ -83,6 +92,87 @@ export default function PlaceDetail() {
       active = false;
     };
   }, [id]);
+
+  const ownReview = reviews.find(
+    (review) => String(review.user?._id) === String(user?._id),
+  );
+
+  const refreshPlace = () => {
+    setIsLoading(true);
+    setReloadKey((key) => key + 1);
+  };
+
+  const handleReviewChange = (event) => {
+    setReviewForm((previous) => ({
+      ...previous,
+      [event.target.name]: event.target.value,
+    }));
+  };
+
+  const handleReviewSubmit = async (event) => {
+    event.preventDefault();
+    setReviewMutation("saving");
+    setReviewsError("");
+    setReviewSuccess("");
+
+    try {
+      const payload = {
+        rating: Number(reviewForm.rating),
+        comment: reviewForm.comment.trim(),
+      };
+      const savedReview = editingReview
+        ? await updateReview(editingReview._id, payload)
+        : await createReview({ place: id, ...payload });
+
+      setReviews((previous) =>
+        editingReview
+          ? previous.map((review) =>
+              review._id === savedReview._id ? savedReview : review,
+            )
+          : [savedReview, ...previous],
+      );
+      setEditingReview(null);
+      setReviewForm({ rating: "5", comment: "" });
+      setReviewSuccess(editingReview ? "Review updated." : "Review submitted.");
+      refreshPlace();
+    } catch (err) {
+      setReviewsError(err.friendlyMessage || err.message);
+    } finally {
+      setReviewMutation("");
+    }
+  };
+
+  const handleEditReview = (review) => {
+    setEditingReview(review);
+    setReviewForm({ rating: String(review.rating), comment: review.comment });
+    setReviewSuccess("");
+    setReviewsError("");
+  };
+
+  const handleDeleteReview = async (review) => {
+    if (!window.confirm("Delete your review?")) return;
+
+    setReviewMutation(`deleting-${review._id}`);
+    setReviewsError("");
+    setReviewSuccess("");
+
+    try {
+      await deleteReview(review._id);
+      setReviews((previous) =>
+        previous.filter((currentReview) => currentReview._id !== review._id),
+      );
+      if (editingReview?._id === review._id) {
+        setEditingReview(null);
+        setReviewForm({ rating: "5", comment: "" });
+      }
+      setReviewSuccess("Review deleted.");
+      refreshPlace();
+    } catch (err) {
+      setReviewsError(err.friendlyMessage || err.message);
+    } finally {
+      setReviewMutation("");
+    }
+  };
 
   if (isLoading) {
     return <Loader label="Loading place details..." className="py-24" />;
@@ -285,7 +375,9 @@ export default function PlaceDetail() {
 
           {isAuthenticated ? (
             <span className="text-sm text-slate-500">
-              Review form coming in a later phase.
+              {ownReview
+                ? "You have reviewed this place."
+                : "Share your experience."}
             </span>
           ) : (
             <Link
@@ -296,6 +388,131 @@ export default function PlaceDetail() {
             </Link>
           )}
         </div>
+
+        {isAuthenticated && !ownReview && !editingReview && (
+          <form
+            onSubmit={handleReviewSubmit}
+            className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-5"
+          >
+            <h3 className="text-base font-semibold text-emerald-900">
+              Write a review
+            </h3>
+            <div className="mt-4 grid gap-4 sm:grid-cols-[9rem_1fr]">
+              <label className="text-sm font-medium text-slate-700">
+                Rating
+                <select
+                  name="rating"
+                  value={reviewForm.rating}
+                  onChange={handleReviewChange}
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                >
+                  {[5, 4, 3, 2, 1].map((rating) => (
+                    <option key={rating} value={rating}>
+                      {rating} / 5
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-sm font-medium text-slate-700">
+                Comment
+                <textarea
+                  name="comment"
+                  value={reviewForm.comment}
+                  onChange={handleReviewChange}
+                  required
+                  maxLength={2000}
+                  rows={3}
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                  placeholder="What did you think of this place?"
+                />
+              </label>
+            </div>
+            <button
+              type="submit"
+              disabled={reviewMutation === "saving"}
+              className="mt-4 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+            >
+              {reviewMutation === "saving" ? "Submitting..." : "Submit review"}
+            </button>
+          </form>
+        )}
+
+        {isAuthenticated && editingReview && (
+          <form
+            onSubmit={handleReviewSubmit}
+            className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-5"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-base font-semibold text-emerald-900">
+                Edit your review
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingReview(null);
+                  setReviewForm({ rating: "5", comment: "" });
+                }}
+                className="text-sm text-slate-600 hover:text-slate-900"
+              >
+                Cancel
+              </button>
+            </div>
+            <div className="mt-4 grid gap-4 sm:grid-cols-[9rem_1fr]">
+              <label className="text-sm font-medium text-slate-700">
+                Rating
+                <select
+                  name="rating"
+                  value={reviewForm.rating}
+                  onChange={handleReviewChange}
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                >
+                  {[5, 4, 3, 2, 1].map((rating) => (
+                    <option key={rating} value={rating}>
+                      {rating} / 5
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-sm font-medium text-slate-700">
+                Comment
+                <textarea
+                  name="comment"
+                  value={reviewForm.comment}
+                  onChange={handleReviewChange}
+                  required
+                  maxLength={2000}
+                  rows={3}
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                />
+              </label>
+            </div>
+            <button
+              type="submit"
+              disabled={reviewMutation === "saving"}
+              className="mt-4 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+            >
+              {reviewMutation === "saving" ? "Saving..." : "Save changes"}
+            </button>
+          </form>
+        )}
+
+        {reviewSuccess && (
+          <p
+            className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800"
+            role="status"
+          >
+            {reviewSuccess}
+          </p>
+        )}
+
+        {!isReviewsLoading && reviewsError && (
+          <p
+            className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"
+            role="alert"
+          >
+            {reviewsError}
+          </p>
+        )}
 
         {isReviewsLoading && <Loader label="Loading reviews..." />}
 
@@ -318,9 +535,20 @@ export default function PlaceDetail() {
 
         {!isReviewsLoading && !reviewsError && reviews.length > 0 && (
           <div className="mt-4 grid gap-4 md:grid-cols-2">
-            {reviews.map((review) => (
-              <ReviewCard key={review._id} review={review} />
-            ))}
+            {reviews.map((review) => {
+              const canManage = String(review.user?._id) === String(user?._id);
+
+              return (
+                <ReviewCard
+                  key={review._id}
+                  review={review}
+                  canManage={canManage}
+                  onEdit={handleEditReview}
+                  onDelete={handleDeleteReview}
+                  isDeleting={reviewMutation === `deleting-${review._id}`}
+                />
+              );
+            })}
           </div>
         )}
       </section>

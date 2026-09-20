@@ -43,9 +43,10 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = useCallback(async (credentials) => {
-    const data = await authApi.login(credentials);
-    setUser(data?.user ?? null);
-    return data?.user ?? null;
+    await authApi.login(credentials);
+    const currentUser = await authApi.getCurrentUser();
+    setUser(currentUser);
+    return currentUser;
   }, []);
 
   const register = useCallback(
@@ -54,11 +55,7 @@ export function AuthProvider({ children }) {
 
       // The backend does not set cookies on register, so log in right after
       // to give the user a working session (never fakes a session).
-      try {
-        await login({ email: payload.email, password: payload.password });
-      } catch {
-        // Registration succeeded; the user can log in manually if this fails.
-      }
+      await login({ email: payload.email, password: payload.password });
 
       return createdUser;
     },

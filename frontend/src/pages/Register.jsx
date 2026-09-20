@@ -53,7 +53,11 @@ export default function Register() {
       });
       navigate("/", { replace: true });
     } catch (err) {
-      setError(err.friendlyMessage || err.message);
+      setError(
+        err.friendlyMessage ||
+          err.message ||
+          "Account created, but automatic login failed. Please log in manually.",
+      );
     } finally {
       setIsSubmitting(false);
     }

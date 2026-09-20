@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 
@@ -6,10 +7,17 @@ import useAuth from "../hooks/useAuth";
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [logoutError, setLogoutError] = useState("");
 
   const handleLogout = async () => {
-    await logout();
-    navigate("/");
+    setLogoutError("");
+
+    try {
+      await logout();
+      navigate("/");
+    } catch (error) {
+      setLogoutError(error.friendlyMessage || error.message);
+    }
   };
 
   return (
@@ -18,7 +26,9 @@ export default function AdminDashboard() {
 
       <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
         <p className="text-sm text-slate-500">Signed in as</p>
-        <p className="mt-1 text-lg font-semibold text-slate-900">{user?.name}</p>
+        <p className="mt-1 text-lg font-semibold text-slate-900">
+          {user?.name}
+        </p>
         <p className="text-sm text-slate-500">
           {user?.email} · role: {user?.role}
         </p>
@@ -35,6 +45,15 @@ export default function AdminDashboard() {
           will be implemented in the next phase.
         </p>
       </div>
+
+      {logoutError && (
+        <p
+          className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"
+          role="alert"
+        >
+          {logoutError}
+        </p>
+      )}
 
       <div className="mt-6 flex flex-wrap gap-3">
         <button

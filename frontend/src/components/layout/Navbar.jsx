@@ -17,13 +17,20 @@ const linkClasses = ({ isActive }) =>
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [logoutError, setLogoutError] = useState("");
   const { user, isAuthLoading, isAuthenticated, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await logout();
-    setIsOpen(false);
-    navigate("/");
+    setLogoutError("");
+
+    try {
+      await logout();
+      setIsOpen(false);
+      navigate("/");
+    } catch (error) {
+      setLogoutError(error.friendlyMessage || error.message);
+    }
   };
 
   const links = [...publicLinks];
@@ -33,7 +40,11 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
       <nav className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-        <Link to="/" className="flex items-center gap-2" onClick={() => setIsOpen(false)}>
+        <Link
+          to="/"
+          className="flex items-center gap-2"
+          onClick={() => setIsOpen(false)}
+        >
           <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-700 text-lg text-white">
             ⛰️
           </span>
@@ -44,7 +55,12 @@ export default function Navbar() {
 
         <div className="hidden items-center gap-1 md:flex">
           {links.map((link) => (
-            <NavLink key={link.to} to={link.to} end={link.end} className={linkClasses}>
+            <NavLink
+              key={link.to}
+              to={link.to}
+              end={link.end}
+              className={linkClasses}
+            >
               {link.label}
             </NavLink>
           ))}
@@ -61,8 +77,12 @@ export default function Navbar() {
             <span className="text-sm text-slate-400">Checking session...</span>
           ) : isAuthenticated ? (
             <>
+              {logoutError && (
+                <span className="text-sm text-red-600">{logoutError}</span>
+              )}
               <span className="text-sm text-slate-600">
-                Hi, <span className="font-medium text-slate-900">{user.name}</span>
+                Hi,{" "}
+                <span className="font-medium text-slate-900">{user.name}</span>
               </span>
               <button
                 type="button"
@@ -117,7 +137,11 @@ export default function Navbar() {
             ))}
 
             {isAdmin && (
-              <NavLink to="/admin" className={linkClasses} onClick={() => setIsOpen(false)}>
+              <NavLink
+                to="/admin"
+                className={linkClasses}
+                onClick={() => setIsOpen(false)}
+              >
                 Admin
               </NavLink>
             )}
@@ -125,12 +149,19 @@ export default function Navbar() {
 
           <div className="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3">
             {isAuthLoading ? (
-              <span className="text-sm text-slate-400">Checking session...</span>
+              <span className="text-sm text-slate-400">
+                Checking session...
+              </span>
             ) : isAuthenticated ? (
               <>
+                {logoutError && (
+                  <span className="text-sm text-red-600">{logoutError}</span>
+                )}
                 <span className="text-sm text-slate-600">
                   Signed in as{" "}
-                  <span className="font-medium text-slate-900">{user.name}</span>
+                  <span className="font-medium text-slate-900">
+                    {user.name}
+                  </span>
                 </span>
                 <button
                   type="button"

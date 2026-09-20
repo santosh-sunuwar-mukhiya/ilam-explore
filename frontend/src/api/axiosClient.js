@@ -29,7 +29,9 @@ export const getApiErrorMessage = (error) => {
 
   if (details.length) return `${baseMessage} (${details.join(", ")})`;
 
-  if (status === 401) return "Your session has expired, please log in again";
+  if (status === 401 && !error.config?.url?.includes("/auth/login")) {
+    return "Your session has expired, please log in again";
+  }
   if (status === 403) return "You do not have permission to do that";
 
   return baseMessage;
