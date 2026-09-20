@@ -5,6 +5,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Place } from "../models/place.model.js";
 import { User } from "../models/user.model.js";
 import { Review } from "../models/review.model.js";
+import { Trip } from "../models/trip.model.js";
 import { uploadOnCloudinary, deleteFromCloudinaryMany } from "../config/cloudinary.js";
 
 // Numbers / null / undefined must not break the controllers
@@ -350,6 +351,7 @@ const deletePlace = asyncHandler(async (req, res) => {
   }
 
   const deletedReviews = await Review.deleteMany({ place: place._id });
+  await Trip.updateMany({}, { $pull: { places: place._id } });
   await place.deleteOne();
 
   // remove the place photos from Cloudinary too

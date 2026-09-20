@@ -45,6 +45,7 @@ import userRouter from "./routes/user.route.js";
 import placeRouter from "./routes/place.route.js";
 import adminRouter from "./routes/admin.route.js";
 import reviewRouter from "./routes/review.route.js";
+import tripRouter from "./routes/trip.route.js";
 import { errorHandler, notFound } from "./middlewares/error.middleware.js";
 
 app.use("/api/v1/auth", authRouter)
@@ -52,6 +53,7 @@ app.use("/api/v1/users", userRouter);
 app.use("/api/v1/places", placeRouter);
 app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/reviews", reviewRouter);
+app.use("/api/v1/trip", tripRouter);
 
 app.get("/api/health", (req, res) => {
   res.send("I am making Explore Ilam Website");
