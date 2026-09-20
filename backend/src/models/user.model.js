@@ -23,6 +23,8 @@ const userSchema = new mongoose.Schema(
     },
     role: { type: String, enum: ["user", "admin"], default: "user" },
     isVerified: { type: Boolean, default: false },
+    isSuspended: { type: Boolean, default: false },
+    suspendedAt: { type: Date, default: null },
     refreshToken: { type: String, select: false },
     avatar: { type: String, default: "" },
     savedPlaces: [

@@ -17,10 +17,15 @@ export const protect = asyncHandler(async (req, _ , next) => {
 
     if (!user) throw new ApiError(401, "User no longer exists");
 
+    if (user.isSuspended) {
+      throw new ApiError(403, "Your account has been suspended");
+    }
+
     req.user = user;
     next();
   } catch (err) {
     console.log("Error occured while validating access token!", err.message);
+    if (err instanceof ApiError) throw err;
     throw new ApiError(401, err?.message || "Invalid or Expired access token");
   }
 });

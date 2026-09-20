@@ -122,6 +122,10 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(401, "Invalid user credentials");
   }
 
+  if (user.isSuspended) {
+    throw new ApiError(403, "Your account has been suspended");
+  }
+
   const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
     user._id,
   );
@@ -196,6 +200,10 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
   if (!user) {
     throw new ApiError(401, "Invalid refresh Token!");
+  }
+
+  if (user.isSuspended) {
+    throw new ApiError(403, "Your account has been suspended");
   }
 
   if (!hashesMatch(hashToken(incomingRefreshToken), user.refreshToken || "")) {
