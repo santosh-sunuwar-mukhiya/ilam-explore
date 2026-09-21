@@ -176,6 +176,52 @@ const verifyEmail = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Email verified successfully."));
 });
 
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body || {};
+  const normalizedEmail = email?.trim().toLowerCase();
+  const genericMessage =
+    "If an account with that email exists, a password reset code has been sent.";
+
+  if (!normalizedEmail) {
+    throw new ApiError(400, "email is required!");
+  }
+
+  if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
+    throw new ApiError(400, "Please provide a valid email");
+  }
+
+  const user = await User.findOne({ email: normalizedEmail });
+
+  if (!user || user.isSuspended) {
+    return res.status(200).json(new ApiResponse(200, {}, genericMessage));
+  }
+
+  const resetPasswordOtp = generateVerificationOtp();
+
+  user.resetPasswordOtp = hashOtp(resetPasswordOtp);
+  user.resetPasswordOtpExpireAt = new Date(Date.now() + 10 * 60 * 1000);
+  await user.save();
+
+  await sendEmail({
+    to: user.email,
+    subject: "Reset your Ilam Explore password",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; color: #1f2937; line-height: 1.6;">
+        <h1 style="color: #14532d;">Ilam Explore</h1>
+        <h2>Reset your password</h2>
+        <p>We received a request to reset your Ilam Explore account password.</p>
+        <p>Your password reset code is:</p>
+        <p style="font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #14532d;">${resetPasswordOtp}</p>
+        <p>This code expires in 10 minutes.</p>
+        <p><strong>Do not share this code with anyone.</strong></p>
+        <p>If you did not request a password reset, you can safely ignore this email.</p>
+      </div>
+    `,
+  });
+
+  return res.status(200).json(new ApiResponse(200, {}, genericMessage));
+});
+
 const loginUser = asyncHandler(async (req, res) => {
   // details from frontend
   // email, password
@@ -355,6 +401,7 @@ const getMe = asyncHandler(async (req, res) => {
 export {
   registerUser,
   verifyEmail,
+  forgotPassword,
   loginUser,
   logoutUser,
   refreshAccessToken,
