@@ -222,6 +222,71 @@ const forgotPassword = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, {}, genericMessage));
 });
 
+const resetPassword = asyncHandler(async (req, res) => {
+  const { email, otp, newPassword, confirmPassword } = req.body || {};
+  const normalizedEmail = email?.trim().toLowerCase();
+  const genericResetFailure = "Unable to reset password.";
+
+  if (!normalizedEmail || !otp || !newPassword || !confirmPassword) {
+    throw new ApiError(
+      400,
+      "Email, OTP, new password, and confirmation are required!",
+    );
+  }
+
+  if (newPassword !== confirmPassword) {
+    throw new ApiError(400, "New password and confirmation do not match.");
+  }
+
+  if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
+    throw new ApiError(400, "Please provide a valid email");
+  }
+
+  const user = await User.findOne({ email: normalizedEmail }).select(
+    "+password +resetPasswordOtp +resetPasswordOtpExpireAt",
+  );
+
+  if (!user) {
+    throw new ApiError(400, genericResetFailure);
+  }
+
+  if (!user.resetPasswordOtp || !user.resetPasswordOtpExpireAt) {
+    throw new ApiError(400, genericResetFailure);
+  }
+
+  if (user.resetPasswordOtpExpireAt.getTime() < Date.now()) {
+    throw new ApiError(400, "Password reset OTP has expired.");
+  }
+
+  if (!hashesMatch(hashOtp(String(otp)), user.resetPasswordOtp)) {
+    throw new ApiError(400, "Invalid password reset OTP.");
+  }
+
+  user.password = newPassword;
+  user.resetPasswordOtp = null;
+  user.resetPasswordOtpExpireAt = null;
+  user.refreshToken = null;
+  await user.save();
+
+  const options = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  };
+
+  return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(
+      new ApiResponse(
+        200,
+        {},
+        "Password reset successful. Please login with your new password.",
+      ),
+    );
+});
+
 const loginUser = asyncHandler(async (req, res) => {
   // details from frontend
   // email, password
@@ -402,6 +467,7 @@ export {
   registerUser,
   verifyEmail,
   forgotPassword,
+  resetPassword,
   loginUser,
   logoutUser,
   refreshAccessToken,

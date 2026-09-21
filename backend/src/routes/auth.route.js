@@ -4,6 +4,7 @@ import {
   registerUser,
   verifyEmail,
   forgotPassword,
+  resetPassword,
   loginUser,
   logoutUser,
   refreshAccessToken,
@@ -17,6 +18,7 @@ const router = Router();
 router.route("/register").post(upload.single("avatar"), registerUser);
 router.route("/verify-email").post(verifyEmail);
 router.route("/forgot-password").post(forgotPassword);
+router.route("/reset-password").post(resetPassword);
 
 router.route("/login").post(loginUser);
 
