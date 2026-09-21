@@ -34,3 +34,12 @@ export const logout = async () => {
   const response = await axiosClient.post("/auth/logout");
   return unwrap(response);
 };
+
+// POST /api/v1/auth/refresh-token -> rotates the HttpOnly auth cookies
+export const refreshAccessToken = async () => {
+  const response = await axiosClient.post("/auth/refresh-token", null, {
+    withCredentials: true,
+    _skipAuthRefresh: true,
+  });
+  return unwrap(response);
+};

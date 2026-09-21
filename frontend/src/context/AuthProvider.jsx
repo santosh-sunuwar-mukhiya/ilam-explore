@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthContext } from "./authContext";
 import * as authApi from "../api/auth.api";
+import { setAuthFailureHandler } from "../api/axiosClient";
 
 // Real authentication state backed by the existing backend endpoints.
 // Cookies are HttpOnly, so the only way to know who is logged in is to ask
@@ -22,6 +23,10 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    const unregisterAuthFailureHandler = setAuthFailureHandler(() => {
+      setUser(null);
+    });
+
     let active = true;
 
     const loadUser = async () => {
@@ -39,6 +44,7 @@ export function AuthProvider({ children }) {
 
     return () => {
       active = false;
+      unregisterAuthFailureHandler();
     };
   }, []);
 

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { API_URL } from "./config";
+import { refreshAccessToken } from "./auth.api";
 
 // Shared axios instance for the whole app.
 // withCredentials is required: the backend authenticates with HttpOnly
@@ -37,10 +38,57 @@ export const getApiErrorMessage = (error) => {
   return baseMessage;
 };
 
+let refreshPromise = null;
+let authFailureHandler = null;
+
+export const setAuthFailureHandler = (handler) => {
+  authFailureHandler = handler;
+
+  return () => {
+    if (authFailureHandler === handler) authFailureHandler = null;
+  };
+};
+
+const shouldRefresh = (error) => {
+  const requestUrl = error.config?.url || "";
+
+  return (
+    error.response?.status === 401 &&
+    !error.config?._skipAuthRefresh &&
+    !requestUrl.includes("/auth/login") &&
+    !requestUrl.includes("/auth/register") &&
+    !requestUrl.includes("/auth/refresh-token") &&
+    !requestUrl.includes("/auth/logout")
+  );
+};
+
+const refreshOnce = () => {
+  if (!refreshPromise) {
+    refreshPromise = refreshAccessToken().finally(() => {
+      refreshPromise = null;
+    });
+  }
+
+  return refreshPromise;
+};
+
 // Attaches a friendly message so pages can render error.message directly.
 axiosClient.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    if (shouldRefresh(error) && !error.config._retry) {
+      error.config._retry = true;
+
+      try {
+        await refreshOnce();
+        return axiosClient(error.config);
+      } catch (refreshError) {
+        if ([401, 403].includes(refreshError.response?.status)) {
+          authFailureHandler?.();
+        }
+      }
+    }
+
     error.friendlyMessage = getApiErrorMessage(error);
     return Promise.reject(error);
   },
