@@ -5,6 +5,7 @@ import Places from "../pages/Places";
 import PlaceDetail from "../pages/PlaceDetail";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
+import VerifyEmail from "../pages/VerifyEmail";
 import AdminDashboard from "../pages/AdminDashboard";
 import NotFound from "../pages/NotFound";
 import ProtectedRoute from "./ProtectedRoute";
@@ -19,6 +20,7 @@ export default function AppRoutes() {
         <Route path="/places/:id" element={<PlaceDetail />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route
           path="/admin"
           element={

@@ -1,7 +1,7 @@
 import axiosClient, { unwrap } from "./axiosClient";
 
-// POST /api/v1/auth/login -> { user, accessToken, refreshToken }
-// Tokens are also set as HttpOnly cookies by the backend.
+// POST /api/v1/auth/login -> { user }
+// Authentication tokens are set as HttpOnly cookies by the backend.
 export const login = async ({ email, password }) => {
   const response = await axiosClient.post("/auth/login", { email, password });
   return unwrap(response);
@@ -20,6 +20,18 @@ export const register = async ({ name, email, password, avatar }) => {
     headers: { "Content-Type": "multipart/form-data" },
   });
 
+  return unwrap(response);
+};
+
+// POST /api/v1/auth/verify-email -> {}
+export const verifyEmail = async ({ email, otp }) => {
+  const response = await axiosClient.post("/auth/verify-email", { email, otp });
+  return unwrap(response);
+};
+
+// POST /api/v1/auth/resend-verification -> {}
+export const resendVerification = async ({ email }) => {
+  const response = await axiosClient.post("/auth/resend-verification", { email });
   return unwrap(response);
 };
 

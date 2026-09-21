@@ -45,13 +45,21 @@ export default function Register() {
     setIsSubmitting(true);
 
     try {
-      await register({
+      const createdUser = await register({
         name: form.name,
         email: form.email,
         password: form.password,
         avatar,
       });
-      navigate("/", { replace: true });
+
+      if (createdUser?.verificationRequired) {
+        navigate("/verify-email", {
+          replace: true,
+          state: { email: createdUser.email },
+        });
+      } else {
+        navigate("/login", { replace: true });
+      }
     } catch (err) {
       setError(
         err.friendlyMessage ||

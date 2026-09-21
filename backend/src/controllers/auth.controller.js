@@ -23,6 +23,29 @@ const generateVerificationOtp = () =>
 
 const hashOtp = (otp) => crypto.createHash("sha256").update(otp).digest("hex");
 
+const createVerificationOtp = () => ({
+  otp: generateVerificationOtp(),
+  expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+});
+
+const sendVerificationEmail = async (email, verificationOtp) => {
+  await sendEmail({
+    to: email,
+    subject: "Verify your Ilam Explore account",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; color: #1f2937; line-height: 1.6;">
+        <h1 style="color: #14532d;">Ilam Explore</h1>
+        <h2>Verify your email address</h2>
+        <p>Your verification code is:</p>
+        <p style="font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #14532d;">${verificationOtp}</p>
+        <p>This code expires in 10 minutes.</p>
+        <p>If you did not create an Ilam Explore account, you can ignore this email.</p>
+        <p><strong>Do not share this code with anyone.</strong></p>
+      </div>
+    `,
+  });
+};
+
 // Method to Generate access and Refresh token.
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -86,7 +109,7 @@ const registerUser = asyncHandler(async (req, res) => {
     avatarUrl = uploadedAvatar.url;
   }
 
-  const verificationOtp = generateVerificationOtp();
+  const { otp: verificationOtp, expiresAt } = createVerificationOtp();
 
   const user = await User.create({
     name: name.trim(),
@@ -95,24 +118,10 @@ const registerUser = asyncHandler(async (req, res) => {
     avatar: avatarUrl,
     isVerified: false,
     verifyOtp: hashOtp(verificationOtp),
-    verifyOtpExpireAt: new Date(Date.now() + 10 * 60 * 1000),
+    verifyOtpExpireAt: expiresAt,
   });
 
-  await sendEmail({
-    to: user.email,
-    subject: "Verify your Ilam Explore account",
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; color: #1f2937; line-height: 1.6;">
-        <h1 style="color: #14532d;">Ilam Explore</h1>
-        <h2>Verify your email address</h2>
-        <p>Your verification code is:</p>
-        <p style="font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #14532d;">${verificationOtp}</p>
-        <p>This code expires in 10 minutes.</p>
-        <p>If you did not create an Ilam Explore account, you can ignore this email.</p>
-        <p><strong>Do not share this code with anyone.</strong></p>
-      </div>
-    `,
-  });
+  await sendVerificationEmail(user.email, verificationOtp);
 
   return res.status(201).json(
     new ApiResponse(
@@ -125,6 +134,44 @@ const registerUser = asyncHandler(async (req, res) => {
       "Account created. Please verify your email.",
     ),
   );
+});
+
+const resendVerification = asyncHandler(async (req, res) => {
+  const { email } = req.body || {};
+  const normalizedEmail = email?.trim().toLowerCase();
+
+  if (!normalizedEmail) {
+    throw new ApiError(400, "email is required!");
+  }
+
+  if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
+    throw new ApiError(400, "Please provide a valid email");
+  }
+
+  const user = await User.findOne({ email: normalizedEmail }).select(
+    "+verifyOtp +verifyOtpExpireAt",
+  );
+
+  if (!user) {
+    throw new ApiError(404, "User does not exist!");
+  }
+
+  if (user.isVerified) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, {}, "Email is already verified."));
+  }
+
+  const { otp: verificationOtp, expiresAt } = createVerificationOtp();
+  user.verifyOtp = hashOtp(verificationOtp);
+  user.verifyOtpExpireAt = expiresAt;
+  await user.save({ validateBeforeSave: false });
+
+  await sendVerificationEmail(user.email, verificationOtp);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Verification code sent."));
 });
 
 const verifyEmail = asyncHandler(async (req, res) => {
@@ -465,6 +512,7 @@ const getMe = asyncHandler(async (req, res) => {
 
 export {
   registerUser,
+  resendVerification,
   verifyEmail,
   forgotPassword,
   resetPassword,

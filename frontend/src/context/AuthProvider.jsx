@@ -49,23 +49,27 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = useCallback(async (credentials) => {
-    await authApi.login(credentials);
+    const loginResponse = await authApi.login(credentials);
+    const loggedInUser = loginResponse?.user;
+
+    if (loggedInUser && !loggedInUser.isVerified) {
+      await authApi.logout().catch(() => undefined);
+
+      const verificationError = new Error(
+        "Please verify your email before logging in.",
+      );
+      verificationError.friendlyMessage = verificationError.message;
+      throw verificationError;
+    }
+
     const currentUser = await authApi.getCurrentUser();
     setUser(currentUser);
     return currentUser;
   }, []);
 
   const register = useCallback(
-    async (payload) => {
-      const createdUser = await authApi.register(payload);
-
-      // The backend does not set cookies on register, so log in right after
-      // to give the user a working session (never fakes a session).
-      await login({ email: payload.email, password: payload.password });
-
-      return createdUser;
-    },
-    [login],
+    async (payload) => authApi.register(payload),
+    [],
   );
 
   const logout = useCallback(async () => {

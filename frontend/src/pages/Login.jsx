@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
+import * as authApi from "../api/auth.api";
 
 export default function Login() {
   const { login, isAuthenticated } = useAuth();
@@ -10,6 +11,8 @@ export default function Login() {
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const [resendMessage, setResendMessage] = useState("");
+  const [isResending, setIsResending] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Already logged in (or just logged in) -> leave the login page.
@@ -27,6 +30,7 @@ export default function Login() {
     event.preventDefault();
     setIsSubmitting(true);
     setError("");
+    setResendMessage("");
 
     try {
       await login(form);
@@ -35,6 +39,25 @@ export default function Login() {
       setError(err.friendlyMessage || err.message);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setError("");
+    setResendMessage("");
+    setIsResending(true);
+
+    try {
+      await authApi.resendVerification({ email: form.email });
+      setResendMessage("Verification code sent. Check your email.");
+    } catch (err) {
+      setError(
+        err.friendlyMessage ||
+          err.message ||
+          "Unable to resend verification code.",
+      );
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -50,13 +73,28 @@ export default function Login() {
         className="mt-6 space-y-4 rounded-2xl border border-slate-200 bg-white p-6"
       >
         {error && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+          <p
+            className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"
+            role="alert"
+          >
             {error}
           </p>
         )}
 
+        {resendMessage && (
+          <p
+            className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800"
+            role="status"
+          >
+            {resendMessage}
+          </p>
+        )}
+
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-slate-700">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-slate-700"
+          >
             Email
           </label>
           <input
@@ -72,7 +110,10 @@ export default function Login() {
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-slate-700">
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-slate-700"
+          >
             Password
           </label>
           <input
@@ -95,9 +136,34 @@ export default function Login() {
           {isSubmitting ? "Logging in..." : "Log in"}
         </button>
 
+        {error === "Please verify your email before logging in." && (
+          <div className="space-y-2 text-center text-sm">
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={isResending || !form.email}
+              className="font-medium text-emerald-700 hover:text-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isResending ? "Sending code..." : "Resend verification code"}
+            </button>
+            <p>
+              <Link
+                to="/verify-email"
+                state={{ email: form.email }}
+                className="font-medium text-emerald-700 hover:text-emerald-800"
+              >
+                Enter a verification code
+              </Link>
+            </p>
+          </div>
+        )}
+
         <p className="text-center text-sm text-slate-500">
           No account yet?{" "}
-          <Link to="/register" className="font-medium text-emerald-700 hover:text-emerald-800">
+          <Link
+            to="/register"
+            className="font-medium text-emerald-700 hover:text-emerald-800"
+          >
             Register
           </Link>
         </p>
