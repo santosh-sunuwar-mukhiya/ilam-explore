@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../config/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { sendEmail } from "../utils/sendEmail.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
@@ -16,6 +17,11 @@ const hashesMatch = (first = "", second = "") => {
 
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 };
+
+const generateVerificationOtp = () =>
+  crypto.randomInt(100000, 1000000).toString();
+
+const hashOtp = (otp) => crypto.createHash("sha256").update(otp).digest("hex");
 
 // Method to Generate access and Refresh token.
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -80,22 +86,91 @@ const registerUser = asyncHandler(async (req, res) => {
     avatarUrl = uploadedAvatar.url;
   }
 
+  const verificationOtp = generateVerificationOtp();
+
   const user = await User.create({
     name: name.trim(),
     password,
     email: normalizedEmail,
     avatar: avatarUrl,
+    isVerified: false,
+    verifyOtp: hashOtp(verificationOtp),
+    verifyOtpExpireAt: new Date(Date.now() + 10 * 60 * 1000),
   });
 
-  const createdUser = await User.findById(user._id);
+  await sendEmail({
+    to: user.email,
+    subject: "Verify your Ilam Explore account",
+    text: [
+      "Welcome to Ilam Explore.",
+      "",
+      `Your account verification OTP is: ${verificationOtp}`,
+      "This OTP expires in 10 minutes.",
+      "",
+      "If you did not create this account, you can ignore this email.",
+    ].join("\n"),
+  });
 
-  if (!createdUser) {
-    throw new ApiError(500, "Something went wrong while registering user!");
+  return res.status(201).json(
+    new ApiResponse(
+      201,
+      {
+        email: user.email,
+        isVerified: user.isVerified,
+        verificationRequired: true,
+      },
+      "Account created. Please verify your email.",
+    ),
+  );
+});
+
+const verifyEmail = asyncHandler(async (req, res) => {
+  const { email, otp, code } = req.body || {};
+  const submittedOtp = otp ?? code;
+  const normalizedEmail = email?.trim().toLowerCase();
+
+  if (!normalizedEmail || !submittedOtp) {
+    throw new ApiError(400, "Email and OTP are required!");
   }
 
+  if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
+    throw new ApiError(400, "Please provide a valid email");
+  }
+
+  const user = await User.findOne({ email: normalizedEmail }).select(
+    "+verifyOtp +verifyOtpExpireAt",
+  );
+
+  if (!user) {
+    throw new ApiError(404, "User does not exist!");
+  }
+
+  if (user.isVerified) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, {}, "Email is already verified."));
+  }
+
+  if (!user.verifyOtp || !user.verifyOtpExpireAt) {
+    throw new ApiError(400, "Verification OTP is not available.");
+  }
+
+  if (user.verifyOtpExpireAt.getTime() < Date.now()) {
+    throw new ApiError(400, "Verification OTP has expired.");
+  }
+
+  if (!hashesMatch(hashOtp(String(submittedOtp)), user.verifyOtp)) {
+    throw new ApiError(400, "Invalid verification OTP.");
+  }
+
+  user.isVerified = true;
+  user.verifyOtp = null;
+  user.verifyOtpExpireAt = null;
+  await user.save();
+
   return res
-    .status(201)
-    .json(new ApiResponse(201, createdUser, "User registered Successfully"));
+    .status(200)
+    .json(new ApiResponse(200, {}, "Email verified successfully."));
 });
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -274,4 +349,12 @@ const getMe = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, req.user, "User fetched Successfully!"));
 });
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken, changePassword, getMe };
+export {
+  registerUser,
+  verifyEmail,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  changePassword,
+  getMe,
+};
