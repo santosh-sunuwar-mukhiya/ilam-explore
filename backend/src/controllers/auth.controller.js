@@ -101,14 +101,17 @@ const registerUser = asyncHandler(async (req, res) => {
   await sendEmail({
     to: user.email,
     subject: "Verify your Ilam Explore account",
-    text: [
-      "Welcome to Ilam Explore.",
-      "",
-      `Your account verification OTP is: ${verificationOtp}`,
-      "This OTP expires in 10 minutes.",
-      "",
-      "If you did not create this account, you can ignore this email.",
-    ].join("\n"),
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; color: #1f2937; line-height: 1.6;">
+        <h1 style="color: #14532d;">Ilam Explore</h1>
+        <h2>Verify your email address</h2>
+        <p>Your verification code is:</p>
+        <p style="font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #14532d;">${verificationOtp}</p>
+        <p>This code expires in 10 minutes.</p>
+        <p>If you did not create an Ilam Explore account, you can ignore this email.</p>
+        <p><strong>Do not share this code with anyone.</strong></p>
+      </div>
+    `,
   });
 
   return res.status(201).json(
