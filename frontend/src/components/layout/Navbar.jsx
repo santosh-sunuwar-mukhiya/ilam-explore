@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
+import { resolveImageUrl } from "../../api/config";
 
 // Links available to everyone.
 const publicLinks = [
@@ -14,6 +15,39 @@ const linkClasses = ({ isActive }) =>
       ? "bg-emerald-50 text-emerald-800"
       : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
   }`;
+
+const getInitials = (name = "") => {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+};
+
+function UserAvatar({ user, className = "h-8 w-8" }) {
+  const [hasError, setHasError] = useState(false);
+  const avatarUrl = resolveImageUrl(user?.avatar);
+  const initials = getInitials(user?.name);
+
+  if (avatarUrl && !hasError) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={user?.name ? `${user.name}'s avatar` : "User avatar"}
+        onError={() => setHasError(true)}
+        className={`${className} shrink-0 rounded-full border border-slate-200 object-cover`}
+      />
+    );
+  }
+
+  return (
+    <span
+      className={`flex ${className} shrink-0 items-center justify-center rounded-full border border-emerald-200 bg-emerald-100 text-xs font-semibold text-emerald-800`}
+      aria-label={user?.name || "User initials"}
+    >
+      {initials}
+    </span>
+  );
+}
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -80,10 +114,13 @@ export default function Navbar() {
               {logoutError && (
                 <span className="text-sm text-red-600">{logoutError}</span>
               )}
-              <span className="text-sm text-slate-600">
-                Hi,{" "}
-                <span className="font-medium text-slate-900">{user.name}</span>
-              </span>
+              <div className="flex items-center gap-2">
+                <UserAvatar key={user?.avatar || "avatar"} user={user} />
+                <span className="text-sm text-slate-600">
+                  Hi,{" "}
+                  <span className="font-medium text-slate-900">{user.name}</span>
+                </span>
+              </div>
               <button
                 type="button"
                 onClick={handleLogout}
@@ -157,12 +194,15 @@ export default function Navbar() {
                 {logoutError && (
                   <span className="text-sm text-red-600">{logoutError}</span>
                 )}
-                <span className="text-sm text-slate-600">
-                  Signed in as{" "}
-                  <span className="font-medium text-slate-900">
-                    {user.name}
+                <div className="flex items-center gap-2 py-1">
+                  <UserAvatar key={user?.avatar || "avatar"} user={user} />
+                  <span className="text-sm text-slate-600">
+                    Signed in as{" "}
+                    <span className="font-medium text-slate-900">
+                      {user.name}
+                    </span>
                   </span>
-                </span>
+                </div>
                 <button
                   type="button"
                   onClick={handleLogout}
