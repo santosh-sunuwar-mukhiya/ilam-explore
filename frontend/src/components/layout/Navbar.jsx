@@ -114,13 +114,20 @@ export default function Navbar() {
               {logoutError && (
                 <span className="text-sm text-red-600">{logoutError}</span>
               )}
-              <div className="flex items-center gap-2">
+              <Link
+                to="/profile"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-2 rounded-lg p-1 hover:bg-slate-50"
+                aria-label="Open your profile"
+              >
                 <UserAvatar key={user?.avatar || "avatar"} user={user} />
                 <span className="text-sm text-slate-600">
                   Hi,{" "}
-                  <span className="font-medium text-slate-900">{user.name}</span>
+                  <span className="font-medium text-slate-900">
+                    {user.name}
+                  </span>
                 </span>
-              </div>
+              </Link>
               <button
                 type="button"
                 onClick={handleLogout}
@@ -194,7 +201,12 @@ export default function Navbar() {
                 {logoutError && (
                   <span className="text-sm text-red-600">{logoutError}</span>
                 )}
-                <div className="flex items-center gap-2 py-1">
+                <Link
+                  to="/profile"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-2 rounded-lg p-1 hover:bg-slate-50"
+                  aria-label="Open your profile"
+                >
                   <UserAvatar key={user?.avatar || "avatar"} user={user} />
                   <span className="text-sm text-slate-600">
                     Signed in as{" "}
@@ -202,7 +214,7 @@ export default function Navbar() {
                       {user.name}
                     </span>
                   </span>
-                </div>
+                </Link>
                 <button
                   type="button"
                   onClick={handleLogout}

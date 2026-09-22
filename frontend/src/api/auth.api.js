@@ -55,3 +55,39 @@ export const refreshAccessToken = async () => {
   });
   return unwrap(response);
 };
+// POST /api/v1/auth/forgot-password -> sends password reset OTP email
+export const forgotPassword = async ({ email }) => {
+  const response = await axiosClient.post("/auth/forgot-password", { email });
+  return unwrap(response);
+};
+
+// POST /api/v1/auth/reset-password -> resets password with OTP
+export const resetPassword = async ({
+  email,
+  otp,
+  newPassword,
+  confirmPassword,
+}) => {
+  const response = await axiosClient.post("/auth/reset-password", {
+    email,
+    otp,
+    newPassword,
+    confirmPassword,
+  });
+  return unwrap(response);
+};
+
+// POST /api/v1/auth/change-password -> {}
+export const changePassword = async ({
+  oldPassword,
+  newPassword,
+  confirmPassword,
+}) => {
+  const response = await axiosClient.post("/auth/change-password", {
+    oldPassword,
+    newPassword,
+    confirmPassword,
+  });
+  return unwrap(response);
+};
+

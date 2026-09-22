@@ -38,26 +38,42 @@ const getTargetUser = async (userId, currentUserId) => {
 
 const updateProfile = asyncHandler(async (req, res) => {
   const avatarFilePath = req.file?.path;
+  const previousAvatar = req.user?.avatar;
+  const name = req.body?.name;
 
-  if (!avatarFilePath) {
-    throw new ApiError(400, "Avatar file is missing");
+  if (!avatarFilePath && name === undefined) {
+    throw new ApiError(400, "Name or avatar is required");
   }
 
-  const previousAvatar = req.user?.avatar;
+  const update = {};
 
-  const avatar = await uploadOnCloudinary(avatarFilePath);
+  if (name !== undefined) {
+    const trimmedName = name.trim();
 
-  if (!avatar?.url) {
-    throw new ApiError(500, "Error while uploading Avatar!");
+    if (!trimmedName) {
+      throw new ApiError(400, "Name cannot be empty");
+    }
+
+    if (trimmedName.length > 100) {
+      throw new ApiError(400, "Name must be 100 characters or fewer");
+    }
+
+    update.name = trimmedName;
+  }
+
+  if (avatarFilePath) {
+    const avatar = await uploadOnCloudinary(avatarFilePath);
+
+    if (!avatar?.url) {
+      throw new ApiError(500, "Error while uploading Avatar!");
+    }
+
+    update.avatar = avatar.url;
   }
 
   const user = await User.findByIdAndUpdate(
     req.user?._id,
-    {
-      $set: {
-        avatar: avatar.url,
-      },
-    },
+    { $set: update },
     { returnDocument: "after" },
   ).select(USER_SAFE_FIELDS);
 
@@ -66,13 +82,13 @@ const updateProfile = asyncHandler(async (req, res) => {
   }
 
   // remove the replaced avatar from Cloudinary (no orphan assets)
-  if (previousAvatar && previousAvatar !== user.avatar) {
+  if (avatarFilePath && previousAvatar && previousAvatar !== user.avatar) {
     await deleteFromCloudinary(previousAvatar);
   }
 
   return res
     .status(200)
-    .json(new ApiResponse(200, user, "Avatar Changed Successfully!"));
+    .json(new ApiResponse(200, user, "Profile updated successfully"));
 });
 
 // Admin only: all registered users
