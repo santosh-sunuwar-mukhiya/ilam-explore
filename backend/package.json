@@ -26,5 +26,8 @@
     "multer": "^2.4.0",
     "nodemailer": "^10.0.10",
     "nodemon": "^3.1.14"
+  },
+  "engines": {
+    "node": "26.x"
   }
 }
