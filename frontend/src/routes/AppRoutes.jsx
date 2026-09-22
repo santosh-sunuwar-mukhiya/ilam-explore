@@ -10,6 +10,8 @@ import ForgotPassword from "../pages/ForgotPassword";
 import ResetPassword from "../pages/ResetPassword";
 import ChangePassword from "../pages/ChangePassword";
 import Profile from "../pages/Profile";
+import SavedPlaces from "../pages/SavedPlaces";
+import MyTrip from "../pages/MyTrip";
 import AdminDashboard from "../pages/AdminDashboard";
 import NotFound from "../pages/NotFound";
 import ProtectedRoute from "./ProtectedRoute";
@@ -40,6 +42,22 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/saved-places"
+          element={
+            <ProtectedRoute>
+              <SavedPlaces />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-trip"
+          element={
+            <ProtectedRoute>
+              <MyTrip />
             </ProtectedRoute>
           }
         />

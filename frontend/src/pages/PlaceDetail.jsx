@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { getPlaceById } from "../api/places.api";
+import {
+  getPlaceById,
+  listSavedPlaces,
+  savePlace,
+  unsavePlace,
+} from "../api/places.api";
 import {
   createReview,
   deleteReview,
@@ -16,16 +21,26 @@ import ErrorState from "../components/common/ErrorState";
 import EmptyState from "../components/common/EmptyState";
 import ReviewCard from "../components/reviews/ReviewCard";
 import useAuth from "../hooks/useAuth";
+import SavePlaceButton from "../components/places/SavePlaceButton";
+import { addPlaceToTrip, getMyTrip } from "../api/trip.api";
 
 export default function PlaceDetail() {
   const { id } = useParams();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthLoading, isAuthenticated } = useAuth();
 
   const [place, setPlace] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [status, setStatus] = useState(null);
   const [activeImage, setActiveImage] = useState(0);
+  const [isSaved, setIsSaved] = useState(false);
+  const [saveMutation, setSaveMutation] = useState("");
+  const [saveError, setSaveError] = useState("");
+  const [loginPrompt, setLoginPrompt] = useState(false);
+  const [isInTrip, setIsInTrip] = useState(false);
+  const [tripMutation, setTripMutation] = useState(false);
+  const [tripError, setTripError] = useState("");
+  const [tripLoginPrompt, setTripLoginPrompt] = useState(false);
 
   const [reviews, setReviews] = useState([]);
   const [isReviewsLoading, setIsReviewsLoading] = useState(true);
@@ -62,6 +77,94 @@ export default function PlaceDetail() {
       active = false;
     };
   }, [id, reloadKey]);
+
+  useEffect(() => {
+    if (isAuthLoading || !isAuthenticated) {
+      return undefined;
+    }
+
+    let active = true;
+
+    listSavedPlaces()
+      .then(({ places }) => {
+        if (!active) return;
+        setIsSaved(places.some((savedPlace) => savedPlace._id === id));
+        setSaveError("");
+      })
+      .catch((err) => {
+        if (!active) return;
+        setSaveError(err.friendlyMessage || err.message);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [id, isAuthenticated, isAuthLoading]);
+
+  useEffect(() => {
+    if (isAuthLoading || !isAuthenticated) {
+      return undefined;
+    }
+
+    let active = true;
+
+    getMyTrip()
+      .then(({ places }) => {
+        if (!active) return;
+        setIsInTrip(places.some((tripPlace) => tripPlace._id === id));
+        setTripError("");
+      })
+      .catch((err) => {
+        if (!active) return;
+        setTripError(err.friendlyMessage || err.message);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [id, isAuthenticated, isAuthLoading]);
+
+  const handleSaveToggle = async () => {
+    if (!isAuthenticated) {
+      setLoginPrompt(true);
+      return;
+    }
+
+    const nextSaved = !isSaved;
+    setSaveMutation(nextSaved ? "saving" : "removing");
+    setSaveError("");
+
+    try {
+      if (nextSaved) await savePlace(id);
+      else await unsavePlace(id);
+      setIsSaved(nextSaved);
+      setLoginPrompt(false);
+    } catch (err) {
+      setSaveError(err.friendlyMessage || err.message);
+    } finally {
+      setSaveMutation("");
+    }
+  };
+
+  const handleAddToTrip = async () => {
+    if (!isAuthenticated) {
+      setTripLoginPrompt(true);
+      return;
+    }
+
+    setTripMutation(true);
+    setTripError("");
+
+    try {
+      const trip = await addPlaceToTrip(id);
+      setIsInTrip(trip.places.some((tripPlace) => tripPlace._id === id));
+      setTripLoginPrompt(false);
+    } catch (err) {
+      setTripError(err.friendlyMessage || err.message);
+    } finally {
+      setTripMutation(false);
+    }
+  };
 
   const retry = () => {
     setIsLoading(true);
@@ -202,6 +305,7 @@ export default function PlaceDetail() {
 
   const images = place.images ?? [];
   const currentImage = resolveImageUrl(images[activeImage] ?? images[0]);
+  const displayedIsInTrip = isAuthenticated && isInTrip;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -230,6 +334,71 @@ export default function PlaceDetail() {
             reviewCount={place.reviewCount}
             className="mt-3"
           />
+        )}
+
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <SavePlaceButton
+            isSaved={isAuthenticated && isSaved}
+            isLoading={Boolean(saveMutation) || isAuthLoading}
+            onClick={handleSaveToggle}
+          />
+          <button
+            type="button"
+            onClick={handleAddToTrip}
+            disabled={isAuthLoading || tripMutation || displayedIsInTrip}
+            className={`rounded-lg border px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${
+              displayedIsInTrip
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                : "border-emerald-700 text-emerald-700 hover:bg-emerald-50"
+            }`}
+          >
+            {tripMutation
+              ? "Adding..."
+              : displayedIsInTrip
+                ? "Added to My Trip"
+                : "Add to My Trip"}
+          </button>
+          {!isAuthenticated && !isAuthLoading && (
+            <span className="text-sm text-slate-500">
+              Log in to save this place.
+            </span>
+          )}
+        </div>
+        {loginPrompt && !isAuthenticated && (
+          <p className="mt-2 text-sm text-amber-700" role="status">
+            Please{" "}
+            <Link
+              to="/login"
+              state={{ from: `/places/${id}` }}
+              className="font-medium underline"
+            >
+              log in
+            </Link>{" "}
+            to save places.
+          </p>
+        )}
+        {saveError && (
+          <p className="mt-2 text-sm text-red-700" role="alert">
+            {saveError}
+          </p>
+        )}
+        {!isAuthenticated && !isAuthLoading && tripLoginPrompt && (
+          <p className="mt-2 text-sm text-amber-700" role="status">
+            Please{" "}
+            <Link
+              to="/login"
+              state={{ from: `/places/${id}` }}
+              className="font-medium underline"
+            >
+              log in
+            </Link>{" "}
+            to add places to your trip.
+          </p>
+        )}
+        {tripError && (
+          <p className="mt-2 text-sm text-red-700" role="alert">
+            {tripError}
+          </p>
         )}
       </header>
 

@@ -25,3 +25,33 @@ export const getPlaceById = async (id, { signal } = {}) => {
 
   return unwrap(response);
 };
+
+// GET /api/v1/places/saved (authenticated)
+export const listSavedPlaces = async ({ signal } = {}) => {
+  const response = await axiosClient.get("/places/saved", { signal });
+  const data = unwrap(response) || {};
+  const places = (data.places ?? []).filter(Boolean);
+
+  return {
+    places,
+    total: places.length,
+  };
+};
+
+// POST /api/v1/places/:placeId/save (authenticated)
+export const savePlace = async (placeId) => {
+  const response = await axiosClient.post(
+    `/places/${encodeURIComponent(placeId)}/save`,
+  );
+
+  return unwrap(response);
+};
+
+// DELETE /api/v1/places/:placeId/save (authenticated)
+export const unsavePlace = async (placeId) => {
+  const response = await axiosClient.delete(
+    `/places/${encodeURIComponent(placeId)}/save`,
+  );
+
+  return unwrap(response);
+};

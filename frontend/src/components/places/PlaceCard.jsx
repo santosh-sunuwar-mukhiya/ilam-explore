@@ -4,7 +4,11 @@ import StarRating from "../common/StarRating";
 import { resolveImageUrl } from "../../api/config";
 
 // One destination card. All values come from the real /places payload.
-export default function PlaceCard({ place }) {
+export default function PlaceCard({
+  place,
+  onRemove,
+  removeLabel = "Remove saved",
+}) {
   const image = resolveImageUrl(place?.images?.[0]);
 
   return (
@@ -55,12 +59,23 @@ export default function PlaceCard({ place }) {
             reviewCount={place.reviewCount}
           />
 
-          <Link
-            to={`/places/${place._id}`}
-            className="rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-emerald-800"
-          >
-            View details
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              to={`/places/${place._id}`}
+              className="rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-emerald-800"
+            >
+              View details
+            </Link>
+            {onRemove && (
+              <button
+                type="button"
+                onClick={() => onRemove(place)}
+                className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:border-red-200 hover:text-red-700"
+              >
+                {removeLabel}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </article>

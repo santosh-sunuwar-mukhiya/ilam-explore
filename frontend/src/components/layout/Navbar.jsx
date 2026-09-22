@@ -99,6 +99,17 @@ export default function Navbar() {
             </NavLink>
           ))}
 
+          {isAuthenticated && (
+            <>
+              <NavLink to="/saved-places" className={linkClasses}>
+                Saved Places
+              </NavLink>
+              <NavLink to="/my-trip" className={linkClasses}>
+                My Trip
+              </NavLink>
+            </>
+          )}
+
           {isAdmin && (
             <NavLink to="/admin" className={linkClasses}>
               Admin
@@ -179,6 +190,25 @@ export default function Navbar() {
                 {link.label}
               </NavLink>
             ))}
+
+            {isAuthenticated && (
+              <>
+                <NavLink
+                  to="/saved-places"
+                  className={linkClasses}
+                  onClick={() => setIsOpen(false)}
+                >
+                  Saved Places
+                </NavLink>
+                <NavLink
+                  to="/my-trip"
+                  className={linkClasses}
+                  onClick={() => setIsOpen(false)}
+                >
+                  My Trip
+                </NavLink>
+              </>
+            )}
 
             {isAdmin && (
               <NavLink
