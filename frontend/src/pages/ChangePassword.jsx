@@ -44,6 +44,11 @@ export default function ChangePassword() {
       return;
     }
 
+    if (form.oldPassword === form.newPassword) {
+      setError("New password must be different from your current password.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
