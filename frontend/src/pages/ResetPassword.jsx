@@ -181,7 +181,7 @@ export default function ResetPassword() {
                   aria-label={
                     showNewPassword ? "Hide password" : "Show password"
                   }
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus:text-slate-600 focus:outline-none"
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus:text-slate-600"
                 >
                   {showNewPassword ? (
                     <EyeOffIcon className="h-5 w-5" />
@@ -220,7 +220,7 @@ export default function ResetPassword() {
                       ? "Hide confirm password"
                       : "Show confirm password"
                   }
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus:text-slate-600 focus:outline-none"
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus:text-slate-600"
                 >
                   {showConfirmPassword ? (
                     <EyeOffIcon className="h-5 w-5" />

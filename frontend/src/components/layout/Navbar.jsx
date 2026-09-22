@@ -123,16 +123,18 @@ export default function Navbar() {
           ) : isAuthenticated ? (
             <>
               {logoutError && (
-                <span className="text-sm text-red-600">{logoutError}</span>
+                <span className="break-word text-sm text-red-600">
+                  {logoutError}
+                </span>
               )}
               <Link
                 to="/profile"
                 onClick={() => setIsOpen(false)}
-                className="flex items-center gap-2 rounded-lg p-1 hover:bg-slate-50"
+                className="flex min-w-0 items-center gap-2 rounded-lg p-1 hover:bg-slate-50"
                 aria-label="Open your profile"
               >
                 <UserAvatar key={user?.avatar || "avatar"} user={user} />
-                <span className="text-sm text-slate-600">
+                <span className="min-w-0 truncate text-sm text-slate-600">
                   Hi,{" "}
                   <span className="font-medium text-slate-900">
                     {user.name}
@@ -229,16 +231,18 @@ export default function Navbar() {
             ) : isAuthenticated ? (
               <>
                 {logoutError && (
-                  <span className="text-sm text-red-600">{logoutError}</span>
+                  <span className="break-word text-sm text-red-600">
+                    {logoutError}
+                  </span>
                 )}
                 <Link
                   to="/profile"
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-2 rounded-lg p-1 hover:bg-slate-50"
+                  className="flex min-w-0 items-center gap-2 rounded-lg p-1 hover:bg-slate-50"
                   aria-label="Open your profile"
                 >
                   <UserAvatar key={user?.avatar || "avatar"} user={user} />
-                  <span className="text-sm text-slate-600">
+                  <span className="min-w-0 truncate text-sm text-slate-600">
                     Signed in as{" "}
                     <span className="font-medium text-slate-900">
                       {user.name}

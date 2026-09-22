@@ -106,7 +106,11 @@ export default function SavedPlaces() {
             <PlaceCard
               key={place._id}
               place={place}
-              onRemove={removingId === place._id ? undefined : handleRemove}
+              onRemove={handleRemove}
+              isRemoving={removingId === place._id}
+              removeLabel={
+                removingId === place._id ? "Removing..." : "Remove saved"
+              }
             />
           ))}
         </div>

@@ -8,6 +8,7 @@ export default function PlaceCard({
   place,
   onRemove,
   removeLabel = "Remove saved",
+  isRemoving = false,
 }) {
   const image = resolveImageUrl(place?.images?.[0]);
 
@@ -32,7 +33,7 @@ export default function PlaceCard({
 
       <div className="flex flex-1 flex-col gap-3 p-5">
         <div className="flex items-start justify-between gap-3">
-          <h3 className="text-lg font-semibold text-slate-900">
+          <h3 className="min-w-0 break-words text-lg font-semibold text-slate-900">
             <Link
               to={`/places/${place._id}`}
               className="transition hover:text-emerald-700"
@@ -53,13 +54,13 @@ export default function PlaceCard({
           {place.description}
         </p>
 
-        <div className="mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
           <StarRating
             rating={place.averageRating}
             reviewCount={place.reviewCount}
           />
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <Link
               to={`/places/${place._id}`}
               className="rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-emerald-800"
@@ -70,7 +71,8 @@ export default function PlaceCard({
               <button
                 type="button"
                 onClick={() => onRemove(place)}
-                className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:border-red-200 hover:text-red-700"
+                disabled={isRemoving}
+                className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:border-red-200 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {removeLabel}
               </button>

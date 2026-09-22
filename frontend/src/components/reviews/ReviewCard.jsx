@@ -28,10 +28,10 @@ export default function ReviewCard({
           </span>
         )}
 
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <p className="text-sm font-semibold text-slate-900">
+              <p className="break-words text-sm font-semibold text-slate-900">
                 {review?.user?.name || "Deleted user"}
               </p>
               {canManage && (
@@ -61,7 +61,7 @@ export default function ReviewCard({
 
           <StarRating rating={review?.rating} className="mt-1" />
 
-          <p className="mt-3 text-sm leading-relaxed text-slate-600">
+          <p className="mt-3 break-words text-sm leading-relaxed text-slate-600">
             {review?.comment}
           </p>
         </div>

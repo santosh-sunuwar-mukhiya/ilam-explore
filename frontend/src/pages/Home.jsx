@@ -5,6 +5,7 @@ import { resolveImageUrl } from "../api/config";
 import PlaceCard from "../components/places/PlaceCard";
 import Loader from "../components/common/Loader";
 import ErrorState from "../components/common/ErrorState";
+import EmptyState from "../components/common/EmptyState";
 
 // Generic tourism copy (not data) for the "why visit" section.
 const highlights = [
@@ -190,13 +191,22 @@ export default function Home() {
           />
         )}
 
-        {!isLoading && !error && (
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {featuredPlaces.map((place) => (
-              <PlaceCard key={place._id} place={place} />
-            ))}
-          </div>
-        )}
+        {!isLoading &&
+          !error &&
+          (featuredPlaces.length > 0 ? (
+            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {featuredPlaces.map((place) => (
+                <PlaceCard key={place._id} place={place} />
+              ))}
+            </div>
+          ) : (
+            <div className="mt-8">
+              <EmptyState
+                title="No featured places yet"
+                message="Check back soon for destinations to explore in Ilam."
+              />
+            </div>
+          ))}
       </section>
 
       {/* Why visit */}
@@ -233,7 +243,8 @@ export default function Home() {
               Ready to plan your Ilam trip?
             </h2>
             <p className="mt-2 text-sm text-emerald-100">
-              Browse every destination, see entry fees and the best time to visit.
+              Browse every destination, see entry fees and the best time to
+              visit.
             </p>
           </div>
 

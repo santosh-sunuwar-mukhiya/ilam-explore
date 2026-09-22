@@ -88,13 +88,19 @@ export default function Register() {
         className="mt-6 space-y-4 rounded-2xl border border-slate-200 bg-white p-6"
       >
         {error && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+          <p
+            className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"
+            role="alert"
+          >
             {error}
           </p>
         )}
 
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-slate-700">
+          <label
+            htmlFor="name"
+            className="block text-sm font-medium text-slate-700"
+          >
             Full name
           </label>
           <input
@@ -109,7 +115,10 @@ export default function Register() {
         </div>
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-slate-700">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-slate-700"
+          >
             Email
           </label>
           <input
@@ -125,7 +134,10 @@ export default function Register() {
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-slate-700">
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-slate-700"
+          >
             Password
           </label>
           <div className="relative mt-1">
@@ -143,7 +155,7 @@ export default function Register() {
               type="button"
               onClick={() => setShowPassword((previous) => !previous)}
               aria-label={showPassword ? "Hide password" : "Show password"}
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus:text-slate-600 focus:outline-none"
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus:text-slate-600"
             >
               {showPassword ? (
                 <EyeOffIcon className="h-5 w-5" />
@@ -180,7 +192,7 @@ export default function Register() {
                   ? "Hide confirm password"
                   : "Show confirm password"
               }
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus:text-slate-600 focus:outline-none"
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus:text-slate-600"
             >
               {showConfirmPassword ? (
                 <EyeOffIcon className="h-5 w-5" />
@@ -192,7 +204,10 @@ export default function Register() {
         </div>
 
         <div>
-          <label htmlFor="avatar" className="block text-sm font-medium text-slate-700">
+          <label
+            htmlFor="avatar"
+            className="block text-sm font-medium text-slate-700"
+          >
             Avatar <span className="text-slate-400">(optional)</span>
           </label>
           <input
@@ -215,7 +230,10 @@ export default function Register() {
 
         <p className="text-center text-sm text-slate-500">
           Already have an account?{" "}
-          <Link to="/login" className="font-medium text-emerald-700 hover:text-emerald-800">
+          <Link
+            to="/login"
+            className="font-medium text-emerald-700 hover:text-emerald-800"
+          >
             Log in
           </Link>
         </p>

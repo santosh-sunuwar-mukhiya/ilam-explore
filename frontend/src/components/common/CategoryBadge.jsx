@@ -4,7 +4,7 @@ export default function CategoryBadge({ category, className = "" }) {
 
   return (
     <span
-      className={`inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200 ring-inset ${className}`}
+      className={`inline-flex max-w-full items-center truncate rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200 ring-inset ${className}`}
     >
       {category}
     </span>

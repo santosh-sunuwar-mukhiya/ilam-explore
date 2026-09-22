@@ -102,7 +102,9 @@ export default function Places() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
       <header>
-        <h1 className="text-3xl font-bold text-slate-900">Places to visit in Ilam</h1>
+        <h1 className="text-3xl font-bold text-slate-900">
+          Places to visit in Ilam
+        </h1>
         <p className="mt-2 text-sm text-slate-500">
           {isLoading
             ? "Loading destinations..."
@@ -112,7 +114,11 @@ export default function Places() {
 
       {/* Filters */}
       <div className="mt-6 flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 md:flex-row md:items-center md:justify-between">
+        <label htmlFor="place-search" className="sr-only">
+          Search places
+        </label>
         <input
+          id="place-search"
           type="search"
           value={searchInput}
           onChange={(event) => {
@@ -132,6 +138,7 @@ export default function Places() {
                 ? "border-slate-200 text-slate-600 hover:bg-slate-50"
                 : "border-emerald-600 bg-emerald-600 text-white"
             }`}
+            aria-pressed={!selectedCategory}
           >
             All
           </button>
@@ -146,6 +153,7 @@ export default function Places() {
                   ? "border-emerald-600 bg-emerald-600 text-white"
                   : "border-slate-200 text-slate-600 hover:bg-slate-50"
               }`}
+              aria-pressed={selectedCategory === category}
             >
               {category}
             </button>

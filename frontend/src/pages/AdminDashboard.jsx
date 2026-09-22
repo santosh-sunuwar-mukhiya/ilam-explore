@@ -466,6 +466,7 @@ export default function AdminDashboard() {
             key={value}
             type="button"
             onClick={() => setTab(value)}
+            aria-selected={tab === value}
             className={`whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium ${tab === value ? "border-emerald-600 text-emerald-700" : "border-transparent text-slate-500 hover:text-slate-900"}`}
           >
             {label}
@@ -547,7 +548,7 @@ export default function AdminDashboard() {
                   key={place._id}
                   className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 sm:flex-row"
                 >
-                  <div className="h-28 w-full flex-shrink-0 overflow-hidden rounded-lg bg-slate-100 sm:w-40">
+                  <div className="h-28 w-full shrink-0 overflow-hidden rounded-lg bg-slate-100 sm:w-40">
                     {place.images?.[0] ? (
                       <img
                         src={resolveImageUrl(place.images[0])}
@@ -728,13 +729,15 @@ function UserList({ title, users, currentUserId, mutation, onManageUser }) {
               key={listedUser._id}
               className="flex items-center justify-between gap-3 border-t border-slate-100 pt-3"
             >
-              <div>
-                <p className="text-sm font-medium text-slate-900">
+              <div className="min-w-0">
+                <p className="wrap-break-word text-sm font-medium text-slate-900">
                   {listedUser.name}
                 </p>
-                <p className="text-xs text-slate-500">{listedUser.email}</p>
+                <p className="wrap-break-word text-xs text-slate-500">
+                  {listedUser.email}
+                </p>
               </div>
-              <div className="text-right">
+              <div className="shrink-0 text-right">
                 <span
                   className={`text-xs font-medium ${listedUser.role === "admin" ? "text-emerald-700" : "text-slate-500"}`}
                 >

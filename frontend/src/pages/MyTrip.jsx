@@ -104,8 +104,11 @@ export default function MyTrip() {
             <PlaceCard
               key={place._id}
               place={place}
-              removeLabel="Remove from trip"
-              onRemove={removingId === place._id ? undefined : handleRemove}
+              removeLabel={
+                removingId === place._id ? "Removing..." : "Remove from trip"
+              }
+              onRemove={handleRemove}
+              isRemoving={removingId === place._id}
             />
           ))}
         </div>

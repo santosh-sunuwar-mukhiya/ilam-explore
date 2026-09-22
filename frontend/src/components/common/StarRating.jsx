@@ -5,11 +5,13 @@ export default function StarRating({ rating = 0, reviewCount, className = "" }) 
   return (
     <span
       className={`inline-flex items-center gap-2 text-sm ${className}`}
-      aria-label={`Rated ${Number(rating).toFixed(1)} out of 5`}
+      aria-label={`Rated ${rounded} out of 5`}
     >
       <span aria-hidden="true" className="tracking-tight text-amber-500">
         {"★".repeat(rounded)}
-        <span className="text-slate-300">{"★".repeat(Math.max(0, 5 - rounded))}</span>
+        <span className="text-slate-300">
+          {"★".repeat(Math.max(0, 5 - rounded))}
+        </span>
       </span>
 
       <span className="text-slate-600">

@@ -309,7 +309,7 @@ export default function PlaceDetail() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
-      <nav className="text-sm text-slate-500">
+      <nav className="text-sm text-slate-500" aria-label="Breadcrumb">
         <Link to="/places" className="hover:text-emerald-700">
           Places
         </Link>
@@ -431,6 +431,8 @@ export default function PlaceDetail() {
                       ? "border-emerald-600"
                       : "border-transparent hover:border-slate-300"
                   }`}
+                  aria-label={`Show photo ${index + 1} of ${images.length}`}
+                  aria-pressed={activeImage === index}
                 >
                   <img
                     src={resolveImageUrl(image)}
@@ -671,15 +673,6 @@ export default function PlaceDetail() {
             role="status"
           >
             {reviewSuccess}
-          </p>
-        )}
-
-        {!isReviewsLoading && reviewsError && (
-          <p
-            className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"
-            role="alert"
-          >
-            {reviewsError}
           </p>
         )}
 
