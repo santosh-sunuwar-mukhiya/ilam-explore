@@ -23,6 +23,25 @@ export const listActiveUsers = async () => {
   return toListResult(response, "users");
 };
 
+export const suspendUser = async (id) => {
+  const response = await axiosClient.patch(
+    `/users/${encodeURIComponent(id)}/suspend`,
+  );
+  return unwrap(response);
+};
+
+export const unsuspendUser = async (id) => {
+  const response = await axiosClient.patch(
+    `/users/${encodeURIComponent(id)}/unsuspend`,
+  );
+  return unwrap(response);
+};
+
+export const deleteUser = async (id) => {
+  const response = await axiosClient.delete(`/users/${encodeURIComponent(id)}`);
+  return unwrap(response);
+};
+
 export const listAllReviews = async ({ place } = {}) => {
   const response = await axiosClient.get("/reviews", {
     params: place ? { place } : {},

@@ -7,6 +7,9 @@ import {
   listActiveUsers,
   listAllReviews,
   listUsers,
+  deleteUser,
+  suspendUser,
+  unsuspendUser,
   updatePlace,
 } from "../api/admin.api";
 import { deleteReview, updateReview } from "../api/reviews.api";
@@ -278,6 +281,105 @@ export default function AdminDashboard() {
     }
   };
 
+  const updateManagedUser = (updatedUser) => {
+    const wasActive = activeUsers.some(
+      (listedUser) => listedUser._id === updatedUser._id,
+    );
+
+    setUsers((previous) =>
+      previous.map((listedUser) =>
+        listedUser._id === updatedUser._id ? updatedUser : listedUser,
+      ),
+    );
+    setActiveUsers((previous) => {
+      const withoutUpdatedUser = previous.filter(
+        (listedUser) => listedUser._id !== updatedUser._id,
+      );
+
+      return updatedUser.isSuspended
+        ? withoutUpdatedUser
+        : [...withoutUpdatedUser, updatedUser];
+    });
+    setStats((previous) =>
+      previous
+        ? {
+            ...previous,
+            activeUsers: Math.max(
+              0,
+              previous.activeUsers +
+                (updatedUser.isSuspended
+                  ? wasActive
+                    ? -1
+                    : 0
+                  : wasActive
+                    ? 0
+                    : 1),
+            ),
+          }
+        : previous,
+    );
+  };
+
+  const removeManagedUser = (userId) => {
+    const wasActive = activeUsers.some(
+      (listedUser) => listedUser._id === userId,
+    );
+
+    setUsers((previous) =>
+      previous.filter((listedUser) => listedUser._id !== userId),
+    );
+    setActiveUsers((previous) =>
+      previous.filter((listedUser) => listedUser._id !== userId),
+    );
+    setStats((previous) =>
+      previous
+        ? {
+            ...previous,
+            totalUsers: Math.max(0, previous.totalUsers - 1),
+            activeUsers: Math.max(
+              0,
+              previous.activeUsers - (wasActive ? 1 : 0),
+            ),
+          }
+        : previous,
+    );
+  };
+
+  const manageUser = async (listedUser, action) => {
+    const mutationKey = `user-${action}-${listedUser._id}`;
+
+    if (action === "delete" && !window.confirm(`Delete ${listedUser.name}?`)) {
+      return;
+    }
+
+    setMutation(mutationKey);
+    setError("");
+    setNotice("");
+
+    try {
+      if (action === "delete") {
+        await deleteUser(listedUser._id);
+        removeManagedUser(listedUser._id);
+        setNotice("User deleted successfully.");
+      } else {
+        const updatedUser =
+          action === "suspend"
+            ? await suspendUser(listedUser._id)
+            : await unsuspendUser(listedUser._id);
+        updateManagedUser(updatedUser);
+        setNotice(
+          action === "suspend"
+            ? "User suspended successfully."
+            : "User unsuspended successfully.",
+        );
+      }
+    } catch (userError) {
+      setError(getErrorMessage(userError));
+    } finally {
+      setMutation("");
+    }
+  };
+
   if (isLoading)
     return <Loader label="Loading admin dashboard..." className="py-24" />;
 
@@ -504,7 +606,13 @@ export default function AdminDashboard() {
       )}
 
       {tab === "users" && (
-        <UserManagement users={users} activeUsers={activeUsers} />
+        <UserManagement
+          users={users}
+          activeUsers={activeUsers}
+          currentUserId={user?._id}
+          mutation={mutation}
+          onManageUser={manageUser}
+        />
       )}
 
       {tab === "reviews" && (
@@ -577,16 +685,34 @@ function SummaryList({ title, items, empty, renderItem }) {
   );
 }
 
-function UserManagement({ users, activeUsers }) {
+function UserManagement({
+  users,
+  activeUsers,
+  currentUserId,
+  mutation,
+  onManageUser,
+}) {
   return (
     <section className="mt-8 grid gap-8 lg:grid-cols-2">
-      <UserList title="All users" users={users} />
-      <UserList title="Active users" users={activeUsers} />
+      <UserList
+        title="All users"
+        users={users}
+        currentUserId={currentUserId}
+        mutation={mutation}
+        onManageUser={onManageUser}
+      />
+      <UserList
+        title="Active users"
+        users={activeUsers}
+        currentUserId={currentUserId}
+        mutation={mutation}
+        onManageUser={onManageUser}
+      />
     </section>
   );
 }
 
-function UserList({ title, users }) {
+function UserList({ title, users, currentUserId, mutation, onManageUser }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5">
       <div className="flex items-center justify-between">
@@ -617,6 +743,46 @@ function UserList({ title, users }) {
                 <p className="text-xs text-slate-400">
                   {formatDate(listedUser.createdAt)}
                 </p>
+                <p
+                  className={`text-xs ${listedUser.isSuspended ? "text-red-600" : "text-emerald-600"}`}
+                >
+                  {listedUser.isSuspended ? "Suspended" : "Active"}
+                </p>
+                {listedUser.role !== "admin" &&
+                  listedUser._id !== currentUserId && (
+                    <div className="mt-2 flex justify-end gap-2">
+                      <button
+                        type="button"
+                        disabled={Boolean(mutation)}
+                        onClick={() =>
+                          onManageUser(
+                            listedUser,
+                            listedUser.isSuspended ? "unsuspend" : "suspend",
+                          )
+                        }
+                        className="text-xs font-medium text-emerald-700 disabled:opacity-60"
+                      >
+                        {mutation ===
+                        `user-${listedUser.isSuspended ? "unsuspend" : "suspend"}-${listedUser._id}`
+                          ? listedUser.isSuspended
+                            ? "Restoring..."
+                            : "Suspending..."
+                          : listedUser.isSuspended
+                            ? "Unsuspend"
+                            : "Suspend"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={Boolean(mutation)}
+                        onClick={() => onManageUser(listedUser, "delete")}
+                        className="text-xs font-medium text-red-700 disabled:opacity-60"
+                      >
+                        {mutation === `user-delete-${listedUser._id}`
+                          ? "Deleting..."
+                          : "Delete"}
+                      </button>
+                    </div>
+                  )}
               </div>
             </div>
           ))}
